@@ -7,6 +7,7 @@ import { ContestModule } from './contest/contest.module';
 import { ProblemModule } from './problem/problem.module';
 import { AuthModule } from './auth/auth.module';
 import { CommunModule } from './commun/commun.module';
+import { SubmissionsModule } from './submissions/submissions.module';
 
 const getDatabaseConfig = () => {
   const dbType = process.env.DB_TYPE || 'postgres';
@@ -52,6 +53,7 @@ const getDatabaseConfig = () => {
     ContestModule,
     ProblemModule,
     CommunModule,
+    SubmissionsModule,
   ],
 })
 export class AppModule {}
