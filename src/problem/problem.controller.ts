@@ -47,4 +47,11 @@ export class ProblemController {
   remove(@Param('id') id: string) {
     return this.problemService.remove(id);
   }
+
+  @Patch('restore/:id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN, Role.EDITOR)
+  restore(@Param('id') id: string) {
+    return this.problemService.restore(id);
+  }
 }
