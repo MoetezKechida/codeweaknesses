@@ -1,5 +1,5 @@
 // src/contest/contest.controller.ts
-import { Controller, Get, Post, Body, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, UseGuards, Patch, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -24,13 +24,25 @@ export class ContestController {
     return this.contestService.create(createContestDto);
   }
 
+  @Patch(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN, Role.EDITOR)
+  updateContest(@Body() updateContestDto: any, @Param('id') id: string) {
+    return this.contestService.update(id, updateContestDto);
+  }
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(Role.ADMIN, Role.EDITOR)
-  deleteContest(id: string) {
+  deleteContest(@Param('id') id: string) {
     return this.contestService.remove(id);
   }
 
+  @Patch('restore/:id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN, Role.EDITOR)
+  restoreContest(@Param('id') id: string) {
+    return this.contestService.restore(id);
+  }
 
 }
