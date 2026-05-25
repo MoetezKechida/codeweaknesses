@@ -28,11 +28,10 @@ export abstract class BaseService<T extends TimestampEntity> {
   }
 
   async update(id: string, updateDto: DeepPartial<T>): Promise<T> {
-    
-    await this.findOne(id); 
-    await this.repository.update(id, updateDto as any);
-    return this.findOne(id);
-  }
+  const existingEntity = await this.findOne(id); 
+  const mergedEntity = this.repository.merge(existingEntity, updateDto);
+  return this.repository.save(mergedEntity);
+}
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);

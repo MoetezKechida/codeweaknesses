@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { Problem } from '../../problem/entities/problem.entity';
 import { TimestampEntity } from 'src/commun/entities/timestamp.entity';
 

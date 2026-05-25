@@ -20,7 +20,6 @@ import { CommunModule } from './commun/commun.module';
       synchronize: true, // development
     }),
     AuthModule,
-
     ContestModule,
     ProblemModule,
     CommunModule,

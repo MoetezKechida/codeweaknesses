@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne } from 'typeorm';
 import { Contest } from '../../contest/entities/contest.entity';
 import { TimestampEntity } from 'src/commun/entities/timestamp.entity';
 

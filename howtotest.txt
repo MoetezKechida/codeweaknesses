@@ -1,0 +1,57 @@
+*****
+POST http://localhost:3000/auth/login  (in scripts post response:
+    const responseData = pm.response.json();
+    pm.collectionVariables.set("jwt_token", responseData.access_token);
+) 
+body : 
+{
+  "name": "superadmin",
+  "password": "admin123"
+}
+*******
+POST http://localhost:3000/user
+authorisation tab postman : bearer token {{jwt_token}}
+{
+  "name": "jane_editor",
+  "password": "editorpassword123",
+  "role": "editor"
+}
+********
+
+POST http://localhost:3000/auth/register
+{
+  "name": "john_contestant",
+  "password": "userpassword123",
+
+} role will be user (treated in register)
+
+********
+editor login 
+post http://localhost:3000/auth/login
+(in scripts post response:
+    const responseData = pm.response.json();
+    pm.collectionVariables.set("jwt_token", responseData.access_token);
+) 
+body : 
+{
+  "name": "john_contestant",
+  "password": "userpassword123"
+}
+*******
+create contest
+post http://localhost:3000/contests 
+bearer token {{jwt_token}}
+{
+  "title": "Summvdvdsv 2026",
+  "startTime": "2026-06-01T10:00:00Z",
+  "endTime": "2026-06-02T10:00:00Z"
+}
+********
+Post http://localhost:3000/problem
+bearer token {{jwt_token}}
+{
+  "title": "Reverse a Linked List ewfeff",
+  "description": "Given the head of a singly linked list, reverse the list.",
+  "timeLimitMs": 2000,
+  "contestId": "4175aab4-6228-4ff6-84c1-c71d78de7cc0"
+}

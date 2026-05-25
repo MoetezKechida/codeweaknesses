@@ -1,4 +1,4 @@
-// src/common/entities/base.entity.ts
+
 import { 
   PrimaryGeneratedColumn, 
   CreateDateColumn, 
@@ -17,5 +17,5 @@ export abstract class TimestampEntity {
   updatedAt!: Date;
 
   @DeleteDateColumn()
-  deletedAt!: Date; // Enables soft-delete functionality
+  deletedAt!: Date;
 }

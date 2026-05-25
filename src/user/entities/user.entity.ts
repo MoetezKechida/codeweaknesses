@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { TimestampEntity } from 'src/commun/entities/timestamp.entity';
 
 export enum Role {
