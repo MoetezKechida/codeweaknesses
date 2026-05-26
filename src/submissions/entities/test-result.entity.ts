@@ -23,12 +23,11 @@ export class TestResult extends TimestampEntity {
   error!: string;
 
   @Column({ nullable: true })
-  executionTime!: number; // milliseconds
+  executionTime!: number; 
 
   @Column({ nullable: true })
-  memoryUsed!: number; // bytes
+  memoryUsed!: number;
 
-  // Relationships
   @ManyToOne(() => Submission, (submission) => submission.testResults)
   @JoinColumn({ name: 'submissionId' })
   submission!: Submission;

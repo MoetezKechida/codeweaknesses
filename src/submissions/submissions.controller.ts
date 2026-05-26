@@ -22,7 +22,7 @@ export class SubmissionsController {
     @Body() createSubmissionDto: CreateSubmissionDto,
     @Request() req,
   ): Promise<Submission> {
-    const userId = req.user.sub;
+    const userId = req.user.userId;
     return this.submissionsService.create(createSubmissionDto, userId);
   }
 
@@ -35,7 +35,7 @@ export class SubmissionsController {
   @Get('user/history')
   @UseGuards(AuthGuard('jwt'))
   async getUserSubmissions(@Request() req): Promise<Submission[]> {
-    const userId = req.user.sub;
+    const userId = req.user.userId;
     return this.submissionsService.findByUser(userId);
   }
 

@@ -26,15 +26,15 @@ export class SubmissionsService {
   ): Promise<Submission> {
     const { code, language, problemId, contestId } = createSubmissionDto;
 
-    // Validate problem exists
     const problem = await this.problemsRepository.findOne({
       where: { id: problemId },
+      relations: {
+        contest: true,
+      },
     });
     if (!problem) {
       throw new NotFoundException('Problem not found');
     }
-
-    // Validate contest exists
     const contest = await this.contestsRepository.findOne({
       where: { id: contestId },
     });
@@ -42,17 +42,11 @@ export class SubmissionsService {
       throw new NotFoundException('Contest not found');
     }
 
-    // Validate problem belongs to contest
-    const problemContest = await this.contestsRepository.findOne({
-      where: { id: problem.contest?.id },
-    });
-    if (!problemContest || problemContest.id !== contestId) {
+    if (!problem.contest || problem.contest.id !== contestId) {
       throw new BadRequestException(
         'Problem does not belong to this contest',
       );
     }
-
-    // Validate contest is active
     const now = new Date();
     if (new Date(contest.startTime) > now) {
       throw new BadRequestException('Contest has not started yet');
@@ -61,7 +55,7 @@ export class SubmissionsService {
       throw new BadRequestException('Contest has ended');
     }
 
-    // Validate user exists
+
     const user = await this.usersRepository.findOne({
       where: { id: userId },
     });
@@ -69,12 +63,11 @@ export class SubmissionsService {
       throw new NotFoundException('User not found');
     }
 
-    // Validate code is not empty
+
     if (!code || code.trim().length === 0) {
       throw new BadRequestException('Code cannot be empty');
     }
 
-    // Create submission
     const submission = this.submissionsRepository.create({
       code,
       language,
