@@ -111,11 +111,11 @@ export class SubmissionsService {
     if (!submission) {
       throw new NotFoundException('Submission not found');
     }
-    return submission;
+    return this.sanitizeSubmissionResults(submission);
   }
 
   async findByUser(userId: string): Promise<Submission[]> {
-    return this.submissionsRepository.find({
+    const submissions = await this.submissionsRepository.find({
       where: { userId },
       relations: {
         problem: true,
@@ -123,10 +123,13 @@ export class SubmissionsService {
       },
       order: { submittedAt: 'DESC' },
     });
+    return submissions.map((submission) =>
+      this.sanitizeSubmissionResults(submission),
+    );
   }
 
   async findByProblem(problemId: string): Promise<Submission[]> {
-    return this.submissionsRepository.find({
+    const submissions = await this.submissionsRepository.find({
       where: { problemId },
       relations: {
         user: true,
@@ -134,10 +137,13 @@ export class SubmissionsService {
       },
       order: { submittedAt: 'DESC' },
     });
+    return submissions.map((submission) =>
+      this.sanitizeSubmissionResults(submission),
+    );
   }
 
   async findByContest(contestId: string): Promise<Submission[]> {
-    return this.submissionsRepository.find({
+    const submissions = await this.submissionsRepository.find({
       where: { contestId },
       relations: {
         user: true,
@@ -146,6 +152,9 @@ export class SubmissionsService {
       },
       order: { submittedAt: 'DESC' },
     });
+    return submissions.map((submission) =>
+      this.sanitizeSubmissionResults(submission),
+    );
   }
 
   async updateStatus(
@@ -172,5 +181,23 @@ export class SubmissionsService {
       memoryUsed,
     });
     return this.findOne(id);
+  }
+
+  private sanitizeSubmissionResults(submission: Submission): Submission {
+    if (!submission.testResults) {
+      return submission;
+    }
+
+    submission.testResults = submission.testResults.map((testResult) => {
+      if (!testResult.isHidden) {
+        return testResult;
+      }
+
+      testResult.output = null;
+      testResult.expectedOutput = null;
+      return testResult;
+    });
+
+    return submission;
   }
 }

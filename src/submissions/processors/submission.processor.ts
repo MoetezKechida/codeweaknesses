@@ -48,12 +48,16 @@ export class SubmissionProcessor {
         order: { orderIndex: 'ASC' },
       });
 
+      const visibleTestCases = testCases.filter((testCase) => !testCase.isHidden);
+      const hiddenTestCases = testCases.filter((testCase) => testCase.isHidden);
+
       // Execute code against each test case
       let passedCount = 0;
       let totalExecutionTime = 0;
       let maxMemoryUsed = 0;
+      let visibleCasesPassed = true;
 
-      for (const testCase of testCases) {
+      const runTestCase = async (testCase: TestCase): Promise<boolean> => {
         const result = await this.judgeEngineService.executeCode(
           language,
           code,
@@ -64,18 +68,23 @@ export class SubmissionProcessor {
         maxMemoryUsed = Math.max(maxMemoryUsed, result.memoryUsed);
 
         // Compare output
-        const passed = this.judgeEngineService.compareOutput(
-          result.output,
-          testCase.expectedOutput,
-        );
+        const passed =
+          result.success &&
+          this.judgeEngineService.compareOutput(
+            result.output,
+            testCase.expectedOutput,
+          );
 
-        // Debug logging
-        console.log(`Test case ${testCase.id}:`);
-        console.log(`  Output: [${result.output}]`);
-        console.log(`  Expected: [${testCase.expectedOutput}]`);
-        console.log(`  Passed: ${passed}`);
+        if (testCase.isHidden) {
+          console.log(`Hidden test case ${testCase.id}: ${passed ? 'passed' : 'failed'}`);
+        } else {
+          console.log(`Test case ${testCase.id}:`);
+          console.log(`  Output: [${result.output}]`);
+          console.log(`  Expected: [${testCase.expectedOutput}]`);
+          console.log(`  Passed: ${passed}`);
+        }
 
-        if (passed && result.success) {
+        if (passed) {
           passedCount++;
         }
 
@@ -83,13 +92,39 @@ export class SubmissionProcessor {
         await this.testResultsRepository.save({
           submissionId,
           testCaseId: testCase.id,
-          passed: passed && result.success,
-          output: result.output,
-          expectedOutput: testCase.expectedOutput,
-          error: result.error,
+          passed,
+          isHidden: testCase.isHidden,
+          output: testCase.isHidden ? null : result.output,
+          expectedOutput: testCase.isHidden ? null : testCase.expectedOutput,
+          error: result.error ?? null,
           executionTime: result.executionTime,
           memoryUsed: result.memoryUsed,
         } as any);
+
+        return passed;
+      };
+
+      for (const testCase of visibleTestCases) {
+        const passed = await runTestCase(testCase);
+        if (!passed) {
+          visibleCasesPassed = false;
+        }
+      }
+
+      if (!visibleCasesPassed && hiddenTestCases.length > 0) {
+        console.log(
+          `Skipping ${hiddenTestCases.length} hidden test case(s) after visible test failure.`,
+        );
+      }
+
+      if (visibleCasesPassed) {
+        for (const testCase of hiddenTestCases) {
+          const passed = await runTestCase(testCase);
+          if (!passed) {
+            console.log(`Stopping after first hidden test failure for submission ${submissionId}.`);
+            break;
+          }
+        }
       }
 
       // Calculate score and determine final status

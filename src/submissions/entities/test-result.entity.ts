@@ -13,20 +13,23 @@ export class TestResult extends TimestampEntity {
   @Column({ default: false })
   passed!: boolean;
 
-  @Column({ nullable: true })
-  output!: string;
+  @Column({ default: false })
+  isHidden!: boolean;
 
   @Column({ nullable: true })
-  expectedOutput!: string;
+  output!: string | null;
 
   @Column({ nullable: true })
-  error!: string;
+  expectedOutput!: string | null;
 
   @Column({ nullable: true })
-  executionTime!: number; 
+  error!: string | null;
 
   @Column({ nullable: true })
-  memoryUsed!: number;
+  executionTime!: number | null;
+
+  @Column({ nullable: true })
+  memoryUsed!: number | null;
 
   @ManyToOne(() => Submission, (submission) => submission.testResults)
   @JoinColumn({ name: 'submissionId' })
