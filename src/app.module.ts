@@ -7,6 +7,7 @@ import { ContestModule } from './contest/contest.module';
 import { ProblemModule } from './problem/problem.module';
 import { AuthModule } from './auth/auth.module';
 import { CommunModule } from './commun/commun.module';
+import { QueueModule } from './queue/queue.module';
 import { SubmissionsModule } from './submissions/submissions.module';
 
 const getDatabaseConfig = () => {
@@ -49,6 +50,7 @@ const getDatabaseConfig = () => {
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot(getDatabaseConfig()),
+    QueueModule,
     AuthModule,
     ContestModule,
     ProblemModule,

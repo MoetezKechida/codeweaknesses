@@ -6,6 +6,7 @@ import { TestResult } from './test-result.entity';
 
 export enum SubmissionStatus {
   PENDING = 'pending',
+  RUNNING = 'running',
   ACCEPTED = 'accepted',
   WRONG = 'wrong',
   TLE = 'tle', 

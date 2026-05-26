@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Submission, SubmissionStatus } from './entities/submission.entity';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
+import { QueueService } from 'src/queue/queue.service';
 import { Problem } from 'src/problem/entities/problem.entity';
 import { Contest } from 'src/contest/entities/contest.entity';
 import { User } from 'src/user/entities/user.entity';
@@ -18,6 +19,7 @@ export class SubmissionsService {
     private contestsRepository: Repository<Contest>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private queueService: QueueService,
   ) {}
 
   async create(
@@ -78,7 +80,20 @@ export class SubmissionsService {
       submittedAt: new Date(),
     });
 
-    return this.submissionsRepository.save(submission);
+    // Save submission to database
+    const savedSubmission = await this.submissionsRepository.save(submission);
+
+    // Enqueue job to BullMQ for asynchronous processing
+    await this.queueService.enqueueSubmission(savedSubmission.id, {
+      submissionId: savedSubmission.id,
+      code,
+      language,
+      problemId,
+      contestId,
+      userId,
+    });
+
+    return savedSubmission;
   }
 
   async findOne(id: string): Promise<Submission> {
