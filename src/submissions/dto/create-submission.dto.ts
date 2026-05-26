@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { SubmissionLanguage } from '../entities/submission.entity';
 
 export class CreateSubmissionDto {
   @IsNotEmpty()
@@ -6,8 +7,8 @@ export class CreateSubmissionDto {
   code!: string;
 
   @IsNotEmpty()
-  @IsString()
-  language!: string;
+  @IsEnum(SubmissionLanguage)
+  language!: SubmissionLanguage;
 
   @IsNotEmpty()
   @IsUUID()

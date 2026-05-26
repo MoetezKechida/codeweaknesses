@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Docker from 'dockerode';
+import { SubmissionLanguage } from '../entities/submission.entity';
 
 interface ExecutionResult {
   success: boolean;
@@ -57,7 +58,7 @@ export class JudgeEngineService {
    * Execute code in an isolated Docker container
    */
   async executeCode(
-    language: string,
+    language: SubmissionLanguage,
     code: string,
     input: string,
   ): Promise<ExecutionResult> {
@@ -179,18 +180,18 @@ export class JudgeEngineService {
   /**
    * Get Docker image for language
    */
-  private getImageForLanguage(language: string): string {
-    const images: { [key: string]: string } = {
-      javascript: 'node:22-alpine',
-      python: 'python:3.11-alpine',
-      python3: 'python:3.11-alpine',
-      cpp: 'gcc:latest',
-      c: 'gcc:latest',
-      java: 'openjdk:21-jdk-alpine',
-      bash: 'alpine:latest',
+  private getImageForLanguage(language: SubmissionLanguage): string {
+    const images: Record<SubmissionLanguage, string> = {
+      [SubmissionLanguage.JAVASCRIPT]: 'node:22-alpine',
+      [SubmissionLanguage.PYTHON]: 'python:3.11-alpine',
+      [SubmissionLanguage.PYTHON3]: 'python:3.11-alpine',
+      [SubmissionLanguage.CPP]: 'gcc:latest',
+      [SubmissionLanguage.C]: 'gcc:latest',
+      [SubmissionLanguage.JAVA]: 'openjdk:21-jdk-alpine',
+      [SubmissionLanguage.BASH]: 'alpine:latest',
     };
 
-    const image = images[language.toLowerCase()];
+    const image = images[language];
     if (!image) {
       throw new BadRequestException(
         `Unsupported language: ${language}. Supported: ${Object.keys(images).join(', ')}`,
@@ -202,22 +203,25 @@ export class JudgeEngineService {
   /**
    * Get execution command for language
    */
-  private getCommandForLanguage(language: string, code: string): string[] {
-    switch (language.toLowerCase()) {
-      case 'javascript':
+  private getCommandForLanguage(
+    language: SubmissionLanguage,
+    code: string,
+  ): string[] {
+    switch (language) {
+      case SubmissionLanguage.JAVASCRIPT:
         return ['node', '-e', code];
-      case 'python':
-      case 'python3':
+      case SubmissionLanguage.PYTHON:
+      case SubmissionLanguage.PYTHON3:
         return ['python', '-c', code];
-      case 'cpp':
-      case 'c':
+      case SubmissionLanguage.CPP:
+      case SubmissionLanguage.C:
         // For C/C++, we'd need to compile and run
         // This is simplified - in production, write file and compile
         return ['sh', '-c', `echo "${code}" | gcc -xc - -o /tmp/prog && /tmp/prog`];
-      case 'java':
+      case SubmissionLanguage.JAVA:
         // Simplified Java execution
         return ['sh', '-c', `echo "${code}" | java`];
-      case 'bash':
+      case SubmissionLanguage.BASH:
         return ['sh', '-c', code];
       default:
         throw new BadRequestException(`Unsupported language: ${language}`);

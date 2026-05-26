@@ -15,13 +15,26 @@ export enum SubmissionStatus {
   COMPILATION_ERROR = 'compilation_error',
 }
 
+export enum SubmissionLanguage {
+  JAVASCRIPT = 'javascript',
+  PYTHON = 'python',
+  PYTHON3 = 'python3',
+  CPP = 'cpp',
+  C = 'c',
+  JAVA = 'java',
+  BASH = 'bash',
+}
+
 @Entity('submissions')
 export class Submission extends TimestampEntity {
   @Column()
   code!: string;
 
-  @Column()
-  language!: string;
+  @Column({
+    type: 'enum',
+    enum: SubmissionLanguage,
+  })
+  language!: SubmissionLanguage;
 
   @Column({
     type: 'varchar',
