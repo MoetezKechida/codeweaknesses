@@ -3,21 +3,27 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job } from 'bullmq';
 import { Submission, SubmissionStatus } from '../entities/submission.entity';
+import { TestResult } from '../entities/test-result.entity';
+import { JudgeEngineService } from '../judge/judge-engine.service';
+import { TestCase } from 'src/problem/entities/test-case.entity';
 
 @Injectable()
 export class SubmissionProcessor {
   constructor(
     @InjectRepository(Submission)
     private submissionsRepository: Repository<Submission>,
+    @InjectRepository(TestResult)
+    private testResultsRepository: Repository<TestResult>,
+    @InjectRepository(TestCase)
+    private testCasesRepository: Repository<TestCase>,
+    private judgeEngineService: JudgeEngineService,
   ) {}
-
 
   async processSubmission(job: Job): Promise<any> {
     const submissionId = job.data.submissionId;
+    const { code, language, problemId } = job.data;
 
     try {
-      console.log(`Processing submission ${submissionId}`);
-
       // Fetch submission from database
       const submission = await this.submissionsRepository.findOne({
         where: { id: submissionId },
@@ -36,17 +42,80 @@ export class SubmissionProcessor {
       submission.startedAt = new Date();
       await this.submissionsRepository.save(submission);
 
-      // TODO: Execute code in sandbox
-      // - Run code with timeout
-      // - Compare output with expected output
-      // - Store test results
-      // - Update submission status and score
+      // Fetch test cases for the problem
+      const testCases = await this.testCasesRepository.find({
+        where: { problemId },
+        order: { orderIndex: 'ASC' },
+      });
 
-      // For now, simulate execution
-      await this.simulateCodeExecution(submission);
+      // Execute code against each test case
+      let passedCount = 0;
+      let totalExecutionTime = 0;
+      let maxMemoryUsed = 0;
 
-      console.log(`Submission ${submissionId} processed successfully`);
-      return { success: true, submissionId };
+      for (const testCase of testCases) {
+        const result = await this.judgeEngineService.executeCode(
+          language,
+          code,
+          testCase.input,
+        );
+
+        totalExecutionTime += result.executionTime;
+        maxMemoryUsed = Math.max(maxMemoryUsed, result.memoryUsed);
+
+        // Compare output
+        const passed = this.judgeEngineService.compareOutput(
+          result.output,
+          testCase.expectedOutput,
+        );
+
+        // Debug logging
+        console.log(`Test case ${testCase.id}:`);
+        console.log(`  Output: [${result.output}]`);
+        console.log(`  Expected: [${testCase.expectedOutput}]`);
+        console.log(`  Passed: ${passed}`);
+
+        if (passed && result.success) {
+          passedCount++;
+        }
+
+        // Create test result record
+        await this.testResultsRepository.save({
+          submissionId,
+          testCaseId: testCase.id,
+          passed: passed && result.success,
+          output: result.output,
+          expectedOutput: testCase.expectedOutput,
+          error: result.error,
+          executionTime: result.executionTime,
+          memoryUsed: result.memoryUsed,
+        } as any);
+      }
+
+      // Calculate score and determine final status
+      const score =
+        testCases.length > 0 ? Math.round((passedCount / testCases.length) * 100) : 100;
+      let finalStatus = SubmissionStatus.ACCEPTED;
+
+      if (passedCount === 0 && testCases.length > 0) {
+        finalStatus = SubmissionStatus.WRONG;
+      } else if (passedCount < testCases.length) {
+        finalStatus = SubmissionStatus.WRONG;
+      }
+
+      // Update submission with results
+      submission.status = finalStatus;
+      submission.score = score;
+      submission.executionTime = totalExecutionTime;
+      submission.memoryUsed = maxMemoryUsed;
+      submission.completedAt = new Date();
+
+      await this.submissionsRepository.save(submission);
+
+      console.log(
+        `Submission ${submissionId} completed: ${passedCount}/${testCases.length} tests passed, score: ${score}`,
+      );
+      return { success: true, submissionId, score, passedCount };
     } catch (error) {
       console.error(`Error processing submission ${submissionId}:`, error);
 
@@ -63,23 +132,5 @@ export class SubmissionProcessor {
 
       throw error;
     }
-  }
-
-  /**
-   * Simulate code execution (placeholder)
-   * In production, this will execute code in a Docker sandbox
-   */
-  private async simulateCodeExecution(submission: Submission): Promise<void> {
-    // Simulate execution delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Mock result - in production, this will be from actual execution
-    submission.status = SubmissionStatus.ACCEPTED;
-    submission.completedAt = new Date();
-    submission.executionTime = 150; // milliseconds
-    submission.memoryUsed = 4096; // bytes
-    submission.score = 100;
-
-    await this.submissionsRepository.save(submission);
   }
 }
