@@ -10,14 +10,14 @@ import * as bcrypt from 'bcrypt';
 export class UserService extends BaseService<User> {
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>)
-    {
-      super(userRepository);
-    }
+    private readonly userRepository: Repository<User>,
+  ) {
+    super(userRepository);
+  }
 
-    async onApplicationBootstrap() {
-    const adminExists = await this.userRepository.findOne({ 
-      where: { role: Role.ADMIN } 
+  async onApplicationBootstrap() {
+    const adminExists = await this.userRepository.findOne({
+      where: { role: Role.ADMIN },
     });
 
     if (!adminExists) {
@@ -32,11 +32,9 @@ export class UserService extends BaseService<User> {
     }
   }
 
-    async findByName(name: string): Promise<User | null> {
-    return this.userRepository.findOne({ 
-      where: { name } 
+  async findByName(name: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { name },
     });
   }
-
-  
 }

@@ -7,8 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class ContestService extends BaseService<Contest> {
-  constructor(@InjectRepository(Contest)
-      private readonly contestRepository: Repository<Contest>) {
+  constructor(
+    @InjectRepository(Contest)
+    private readonly contestRepository: Repository<Contest>,
+  ) {
     super(contestRepository);
   }
 }

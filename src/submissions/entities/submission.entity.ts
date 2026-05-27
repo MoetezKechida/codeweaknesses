@@ -9,8 +9,8 @@ export enum SubmissionStatus {
   RUNNING = 'running',
   ACCEPTED = 'accepted',
   WRONG = 'wrong',
-  TLE = 'tle', 
-  MLE = 'mle', 
+  TLE = 'tle',
+  MLE = 'mle',
   RUNTIME_ERROR = 'runtime_error',
   COMPILATION_ERROR = 'compilation_error',
 }
@@ -67,7 +67,7 @@ export class Submission extends TimestampEntity {
   executionTime!: number;
 
   @Column({ nullable: true })
-  memoryUsed!: number; 
+  memoryUsed!: number;
 
   @ManyToOne(() => User, (user) => user.id)
   @JoinColumn({ name: 'userId' })

@@ -16,19 +16,19 @@ export class TestResult extends TimestampEntity {
   @Column({ default: false })
   isHidden!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   output!: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   expectedOutput!: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   error!: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   executionTime!: number | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   memoryUsed!: number | null;
 
   @ManyToOne(() => Submission, (submission) => submission.testResults)
