@@ -4,6 +4,47 @@ import { WebhooksService } from './webhooks.service';
 import { WebhookSubscription } from './entities/webhook-subscription.entity';
 import { WebhookDelivery } from './entities/webhook-delivery.entity';
 
+describe('WebhooksService retry helpers', () => {
+  let service: WebhooksService;
+
+  const subsRepo = {
+    create: jest.fn((value) => value),
+    save: jest.fn(async (value) => ({ id: 'sub-1', ...value })),
+    find: jest.fn(async () => []),
+    findOne: jest.fn(async (options) => (options?.where?.id === 'sub-1' ? { id: 'sub-1' } : null)),
+  };
+  const deliveryRepo = {
+    create: jest.fn((value) => value),
+    save: jest.fn(async (value) => ({ id: 'delivery-1', attempts: 0, ...value })),
+    update: jest.fn(async () => undefined),
+    findOne: jest.fn(async ({ where }) => ({ id: where.id })),
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        WebhooksService,
+        { provide: getRepositoryToken(WebhookSubscription), useValue: subsRepo },
+        { provide: getRepositoryToken(WebhookDelivery), useValue: deliveryRepo },
+      ],
+    }).compile();
+
+    service = module.get<WebhooksService>(WebhooksService);
+  });
+
+  it('uses exponential backoff with a cap', () => {
+    expect(service.getRetryDelayMs(1)).toBe(1000);
+    expect(service.getRetryDelayMs(2)).toBe(2000);
+    expect(service.getRetryDelayMs(3)).toBe(4000);
+    expect(service.getRetryDelayMs(10)).toBe(15000);
+  });
+});import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { WebhooksService } from './webhooks.service';
+import { WebhookSubscription } from './entities/webhook-subscription.entity';
+import { WebhookDelivery } from './entities/webhook-delivery.entity';
+
 describe('WebhooksService', () => {
   let service: WebhooksService;
   const subsRepo = {

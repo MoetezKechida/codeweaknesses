@@ -35,6 +35,17 @@ export class WebhooksService {
     return s;
   }
 
+  async findDelivery(id: string) {
+    return this.deliveryRepo.findOne({
+      where: { id },
+      relations: { subscription: true },
+    });
+  }
+
+  getRetryDelayMs(attempt: number): number {
+    return Math.min(1000 * 2 ** Math.max(0, attempt - 1), 15000);
+  }
+
   signPayload(secret: string, payload: string): string {
     const digest = createHmac('sha256', secret).update(payload).digest('hex');
     return `sha256=${digest}`;
@@ -57,9 +68,12 @@ export class WebhooksService {
     return this.deliveryRepo.save(delivery);
   }
 
-  async deliver(subscription: WebhookSubscription, payload: unknown) {
+  async tryDeliver(
+    subscription: WebhookSubscription,
+    payload: unknown,
+    delivery?: WebhookDelivery,
+  ) {
     const payloadSnapshot = this.snapshotPayload(payload);
-    const delivery = await this.createDelivery(subscription, payloadSnapshot);
     const signature = this.signPayload(subscription.secret ?? '', payloadSnapshot);
 
     let responseCode: number | null = null;
@@ -81,13 +95,40 @@ export class WebhooksService {
       status = WebhookDeliveryStatus.FAILED;
     }
 
-    await this.deliveryRepo.update(delivery.id, {
-      status,
-      attempts: 1,
+    if (delivery) {
+      await this.deliveryRepo.update(delivery.id, {
+        status,
+        attempts: delivery.attempts + 1,
+        lastAttemptAt: new Date(),
+        responseCode,
+      });
+    }
+
+    return { status, responseCode };
+  }
+
+  async deliver(subscription: WebhookSubscription, payload: unknown) {
+    const payloadSnapshot = this.snapshotPayload(payload);
+    const delivery = await this.createDelivery(subscription, payloadSnapshot);
+    const result = await this.tryDeliver(subscription, payloadSnapshot, delivery);
+
+    return this.deliveryRepo.findOne({ where: { id: delivery.id } });
+  }
+
+  async markDeliveryRetrying(id: string, attempt: number, responseCode: number | null) {
+    await this.deliveryRepo.update(id, {
+      status: WebhookDeliveryStatus.PENDING,
+      attempts: attempt,
       lastAttemptAt: new Date(),
       responseCode,
     });
+  }
 
-    return this.deliveryRepo.findOne({ where: { id: delivery.id } });
+  async markDeliveryFailed(id: string, responseCode: number | null) {
+    await this.deliveryRepo.update(id, {
+      status: WebhookDeliveryStatus.FAILED,
+      lastAttemptAt: new Date(),
+      responseCode,
+    });
   }
 }
