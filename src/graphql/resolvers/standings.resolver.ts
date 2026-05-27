@@ -1,5 +1,5 @@
 import { Args, ID, Query, Resolver } from '@nestjs/graphql';
-import { NotFoundException, UseGuards } from '@nestjs/common';
+import { ForbiddenException, NotFoundException, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -18,12 +18,7 @@ import {
 } from '../types/leaderboard.type';
 import { SubmissionType } from '../types/submission.type';
 import { TestResultType } from '../types/test-result.type';
-
-interface JwtUser {
-  userId: string;
-  name: string;
-  role: Role;
-}
+import { JwtUser } from '../types/jwt-user.interface';
 
 @Resolver()
 export class StandingsResolver {
@@ -192,8 +187,12 @@ export class StandingsResolver {
     });
     if (!submission) throw new NotFoundException('Submission not found');
 
-    const showHidden = caller.role === Role.ADMIN;
-    return this.toSubmissionType(submission, showHidden, true);
+    const isAdmin = caller.role === Role.ADMIN;
+    if (!isAdmin && submission.userId !== caller.userId) {
+      throw new ForbiddenException('You can only view your own submissions');
+    }
+
+    return this.toSubmissionType(submission, isAdmin, true);
   }
 
  
