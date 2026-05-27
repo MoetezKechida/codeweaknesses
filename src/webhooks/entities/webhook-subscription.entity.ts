@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { TimestampEntity } from 'src/commun/entities/timestamp.entity';
+import { TimestampEntity } from '../../commun/entities/timestamp.entity';
 import { WebhookDelivery } from './webhook-delivery.entity';
 
 @Entity('webhook_subscriptions')

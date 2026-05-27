@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
-import { TimestampEntity } from 'src/commun/entities/timestamp.entity';
+import { TimestampEntity } from '../../commun/entities/timestamp.entity';
 import { WebhookSubscription } from './webhook-subscription.entity';
 
 export enum WebhookDeliveryStatus {
