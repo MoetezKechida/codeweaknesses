@@ -31,6 +31,21 @@
 $ npm install
 ```
 
+## Local services
+
+The backend uses PostgreSQL and Redis from `docker-compose.yml`.
+Start Docker Desktop first, then run:
+
+```bash
+$ npm run db:up
+```
+
+To start the services and the Nest dev server together:
+
+```bash
+$ npm run start:dev:deps
+```
+
 ## Compile and run the project
 
 ```bash

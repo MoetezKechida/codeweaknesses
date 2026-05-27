@@ -24,6 +24,11 @@ export class ContestController {
     return this.contestService.findAll();
   }
 
+  @Get(':id')
+  getContestById(@Param('id') id: string) {
+    return this.contestService.findOne(id);
+  }
+
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(Role.ADMIN, Role.EDITOR)

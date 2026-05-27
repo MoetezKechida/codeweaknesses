@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UnauthorizedException,
+  Get,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
 import { LoginDto } from './dto/login.dto';
@@ -6,6 +14,7 @@ import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/user/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -40,5 +49,16 @@ export class AuthController {
     }
 
     return this.authService.login(user);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me')
+  async getCurrentUser(@Request() req) {
+    return this.authService.getCurrentUser(req.user.userId);
+  }
+
+  @Post('logout')
+  logout() {
+    return { success: true };
   }
 }

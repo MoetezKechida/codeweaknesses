@@ -17,7 +17,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UseGuards } from '@nestjs/common';
 
-@Controller('problem')
+@Controller(['problem', 'problems'])
 export class ProblemController {
   constructor(private readonly problemService: ProblemService) {}
 

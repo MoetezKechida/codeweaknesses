@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Docker from 'dockerode';
 import { SubmissionLanguage } from '../entities/submission.entity';
@@ -18,6 +18,7 @@ export class JudgeEngineService {
   private docker: Docker;
   private readonly submissionTimeout: number;
   private readonly memoryLimit: number;
+  private readonly logger = new Logger(JudgeEngineService.name);
 
   constructor(private configService: ConfigService) {
     // Initialize Docker client

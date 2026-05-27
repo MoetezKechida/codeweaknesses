@@ -16,6 +16,12 @@ import { Submission } from './entities/submission.entity';
 export class SubmissionsController {
   constructor(private readonly submissionsService: SubmissionsService) {}
 
+  @Get()
+  @UseGuards(AuthGuard('jwt'))
+  async findCurrentUserSubmissions(@Request() req): Promise<Submission[]> {
+    return this.submissionsService.findByUser(req.user.userId);
+  }
+
   @Post()
   @UseGuards(AuthGuard('jwt'))
   async create(

@@ -17,7 +17,7 @@ import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import * as bcrypt from 'bcrypt';
 
-@Controller('user')
+@Controller(['user', 'users'])
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
