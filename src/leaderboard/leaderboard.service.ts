@@ -37,12 +37,23 @@ export class LeaderboardService {
 
     const contestStart = new Date(contest.startTime);
 
-    // Load every submission for this contest, with user info
-    const submissions = await this.submissionsRepo.find({
-      where: { contestId },
-      relations: { user: true },
-      order: { submittedAt: 'ASC' }, // chronological order matters for penalty calc
-    });
+    // Select only the columns needed for standings — avoids loading the code
+    // column (potentially several KB per row) and unrelated fields.
+    const submissions = await this.submissionsRepo
+      .createQueryBuilder('s')
+      .select([
+        's.id',
+        's.userId',
+        's.problemId',
+        's.status',
+        's.submittedAt',
+        's.completedAt',
+      ])
+      .leftJoin('s.user', 'u')
+      .addSelect(['u.id', 'u.name'])
+      .where('s.contestId = :contestId', { contestId })
+      .orderBy('s.submittedAt', 'ASC')
+      .getMany();
 
     // -----------------------------------------------------------------------
     // Group by userId → problemId → submissions[]

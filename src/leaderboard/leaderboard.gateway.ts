@@ -7,13 +7,12 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsException,
 } from '@nestjs/websockets';
-import { Logger, UseGuards } from '@nestjs/common';
+import { Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Server, Socket } from 'socket.io';
 import * as jwt from 'jsonwebtoken';
 import { LeaderboardService } from './leaderboard.service';
-import { LeaderboardPayload } from './dto/leaderboard.dto';
 
 /** Shape of the decoded JWT payload (matches JwtStrategy.validate output) */
 interface JwtPayload {
@@ -32,27 +31,37 @@ interface AuthenticatedSocket extends Socket {
   };
 }
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'SUPER_SECRET_KEY_CHANGE_IN_PRODUCTION';
-
 /** Room name convention keeps contest rooms namespaced */
 const contestRoom = (contestId: string) => `contest:${contestId}`;
 
 @WebSocketGateway({
   cors: {
-    origin: '*',   // tighten to your frontend origin in production
+    origin: '*',
     credentials: true,
   },
   namespace: '/leaderboard',
 })
 export class LeaderboardGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {
   @WebSocketServer()
   private readonly server!: Server;
 
   private readonly logger = new Logger(LeaderboardGateway.name);
+  private jwtSecret!: string;
 
-  constructor(private readonly leaderboardService: LeaderboardService) {}
+  constructor(
+    private readonly leaderboardService: LeaderboardService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  onModuleInit() {
+    const secret = this.configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new Error('JWT_SECRET env variable is not set — refusing to start');
+    }
+    this.jwtSecret = secret;
+  }
 
   // -------------------------------------------------------------------------
   // Lifecycle hooks
@@ -78,7 +87,7 @@ export class LeaderboardGateway
 
     if (token) {
       try {
-        const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
+        const payload = jwt.verify(token, this.jwtSecret) as JwtPayload;
         client.data = {
           userId: payload.sub,
           userName: payload.name,
