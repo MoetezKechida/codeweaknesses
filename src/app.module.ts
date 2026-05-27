@@ -2,6 +2,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { GraphQLModule } from '@nestjs/graphql';
+import { YogaDriver, YogaDriverConfig } from '@graphql-yoga/nestjs';
+import { join } from 'path';
 
 import { ContestModule } from './contest/contest.module';
 import { ProblemModule } from './problem/problem.module';
@@ -10,6 +13,7 @@ import { CommunModule } from './commun/commun.module';
 import { QueueModule } from './queue/queue.module';
 import { SubmissionsModule } from './submissions/submissions.module';
 import { SseModule } from './sse/sse.module';
+import { GraphqlStandingsModule } from './graphql/graphql.module';
 
 const getDatabaseConfig = () => {
   const dbType = process.env.DB_TYPE || 'postgres';
@@ -51,6 +55,12 @@ const getDatabaseConfig = () => {
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot(getDatabaseConfig()),
+    GraphQLModule.forRoot<YogaDriverConfig>({
+      driver: YogaDriver,
+      autoSchemaFile: join(process.cwd(), 'schema.gql'),
+      sortSchema: true,
+      context: ({ req }) => ({ req }),
+    }),
     QueueModule,
     AuthModule,
     ContestModule,
@@ -58,6 +68,7 @@ const getDatabaseConfig = () => {
     CommunModule,
     SubmissionsModule,
     SseModule,
+    GraphqlStandingsModule,
   ],
 })
 export class AppModule {}

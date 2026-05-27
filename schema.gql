@@ -1,0 +1,75 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type BestSubmissionType {
+  executionTime: Int
+  id: ID!
+  language: String!
+  score: Int!
+  status: String!
+  submittedAt: DateTime
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type LeaderboardEntryType {
+  lastAcceptedAt: DateTime
+  problemBreakdowns: [ProblemBreakdownType!]!
+  problemsSolved: Int!
+  rank: Int!
+  totalScore: Int!
+  userId: ID!
+  userName: String!
+}
+
+type ProblemBreakdownType {
+  attempts: Int!
+  bestScore: Int!
+  bestSubmission: BestSubmissionType
+  problemId: ID!
+  problemTitle: String!
+}
+
+type Query {
+  """
+  Leaderboard for a contest: ranked users with per-problem best-submission breakdown.
+  """
+  contestStandings(contestId: ID!): [LeaderboardEntryType!]!
+
+  """Authenticated user's submission history for a contest."""
+  mySubmissions(contestId: ID!): [SubmissionType!]!
+
+  """
+  Full submission detail including test results. Hidden test-case output is filtered for non-admins.
+  """
+  submissionDetail(id: ID!): SubmissionType!
+}
+
+type SubmissionType {
+  code: String
+  completedAt: DateTime
+  executionTime: Int
+  id: ID!
+  language: String!
+  memoryUsed: Int
+  score: Int!
+  status: String!
+  submittedAt: DateTime
+  testResults: [TestResultType!]
+}
+
+type TestResultType {
+  error: String
+  executionTime: Int
+  expectedOutput: String
+  id: ID!
+  isHidden: Boolean!
+  memoryUsed: Int
+  output: String
+  passed: Boolean!
+  testCaseId: ID!
+}
