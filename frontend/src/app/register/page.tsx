@@ -78,7 +78,7 @@ export default function RegisterPage() {
                 <Input
                   id="name"
                   type="text"
-                  name="name"
+                  name="email"
                   placeholder="your_email@example.com"
                   value={formData.name}
                   onChange={handleChange}
