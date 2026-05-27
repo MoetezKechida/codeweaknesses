@@ -24,6 +24,13 @@ export class ContestController {
     return this.contestService.create(createContestDto);
   }
 
+  @Patch('finish/:id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN, Role.EDITOR)
+  finishContest(@Param('id') id: string) {
+    return this.contestService.finishContest(id);
+  }
+
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(Role.ADMIN, Role.EDITOR)

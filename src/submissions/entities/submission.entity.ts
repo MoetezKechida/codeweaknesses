@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
-import { TimestampEntity } from 'src/commun/entities/timestamp.entity';
-import { User } from 'src/user/entities/user.entity';
-import { Problem } from 'src/problem/entities/problem.entity';
+import { TimestampEntity } from '../../commun/entities/timestamp.entity';
+import { User } from '../../user/entities/user.entity';
+import { Problem } from '../../problem/entities/problem.entity';
 import { TestResult } from './test-result.entity';
 
 export enum SubmissionStatus {

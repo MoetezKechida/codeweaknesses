@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WebhooksService } from './webhooks.service';
 import { WebhooksController } from './webhooks.controller';
@@ -7,11 +7,13 @@ import { WebhookDelivery } from './entities/webhook-delivery.entity';
 import { QueueModule } from 'src/queue/queue.module';
 import { QueueService } from 'src/queue/queue.service';
 import { WebhookDeliveryProcessor } from './processors/webhook-delivery.processor';
-import { OnModuleInit } from '@nestjs/common';
+import { Contest } from '../contest/entities/contest.entity';
+import { Submission } from '../submissions/entities/submission.entity';
+import { ContestFinishedListener } from './contest-finished.listener';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([WebhookSubscription, WebhookDelivery]), QueueModule],
-  providers: [WebhooksService, WebhookDeliveryProcessor],
+  imports: [TypeOrmModule.forFeature([WebhookSubscription, WebhookDelivery, Contest, Submission]), QueueModule],
+  providers: [WebhooksService, WebhookDeliveryProcessor, ContestFinishedListener],
   controllers: [WebhooksController],
   exports: [WebhooksService],
 })

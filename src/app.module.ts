@@ -2,6 +2,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import { ContestModule } from './contest/contest.module';
 import { ProblemModule } from './problem/problem.module';
@@ -50,6 +51,7 @@ const getDatabaseConfig = () => {
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot(getDatabaseConfig()),
     QueueModule,
     AuthModule,

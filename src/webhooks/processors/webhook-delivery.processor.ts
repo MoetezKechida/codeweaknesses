@@ -40,7 +40,7 @@ export class WebhookDeliveryProcessor {
     const nextAttempt = attempt + 1;
     const delayMs = this.webhooksService.getRetryDelayMs(nextAttempt);
     await this.webhooksService.markDeliveryRetrying(delivery.id, nextAttempt, result.responseCode);
-    await this.queueService.enqueueWebhookDelivery(delivery.id, {
+    await this.queueService.enqueueWebhookDelivery(`${delivery.id}:${nextAttempt}`, {
       deliveryId,
       attempt: nextAttempt,
     }, delayMs);

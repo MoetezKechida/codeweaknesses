@@ -29,6 +29,12 @@ export class WebhooksService {
     return this.subsRepo.find();
   }
 
+  async findActiveByContestId(contestId: string) {
+    return this.subsRepo.find({
+      where: { contestId, active: true },
+    });
+  }
+
   async findOne(id: string) {
     const s = await this.subsRepo.findOne({ where: { id } });
     if (!s) throw new NotFoundException('Subscription not found');

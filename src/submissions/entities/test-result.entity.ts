@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { TimestampEntity } from 'src/commun/entities/timestamp.entity';
+import { TimestampEntity } from '../../commun/entities/timestamp.entity';
 import { Submission } from './submission.entity';
 
 @Entity('test_results')
