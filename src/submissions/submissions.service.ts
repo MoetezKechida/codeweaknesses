@@ -1,10 +1,11 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  Submission,
-  SubmissionStatus,
-} from './entities/submission.entity';
+import { Submission, SubmissionStatus } from './entities/submission.entity';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { QueueService } from 'src/queue/queue.service';
 import { Problem } from 'src/problem/entities/problem.entity';
@@ -48,9 +49,7 @@ export class SubmissionsService {
     }
 
     if (!problem.contest || problem.contest.id !== contestId) {
-      throw new BadRequestException(
-        'Problem does not belong to this contest',
-      );
+      throw new BadRequestException('Problem does not belong to this contest');
     }
     const now = new Date();
     if (new Date(contest.startTime) > now) {
@@ -60,14 +59,12 @@ export class SubmissionsService {
       throw new BadRequestException('Contest has ended');
     }
 
-
     const user = await this.usersRepository.findOne({
       where: { id: userId },
     });
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
 
     if (!code || code.trim().length === 0) {
       throw new BadRequestException('Code cannot be empty');
@@ -163,8 +160,7 @@ export class SubmissionsService {
   ): Promise<Submission> {
     await this.submissionsRepository.update(id, {
       status,
-      completedAt:
-        status !== SubmissionStatus.PENDING ? new Date() : undefined,
+      completedAt: status !== SubmissionStatus.PENDING ? new Date() : undefined,
     });
     return this.findOne(id);
   }

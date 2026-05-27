@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module, OnModuleInit, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { SubmissionsService } from './submissions.service';
@@ -13,12 +13,21 @@ import { Problem } from 'src/problem/entities/problem.entity';
 import { Contest } from 'src/contest/entities/contest.entity';
 import { User } from 'src/user/entities/user.entity';
 import { TestCase } from 'src/problem/entities/test-case.entity';
+import { SseModule } from '../sse/sse.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Submission, TestResult, Problem, Contest, User, TestCase]),
+    TypeOrmModule.forFeature([
+      Submission,
+      TestResult,
+      Problem,
+      Contest,
+      User,
+      TestCase,
+    ]),
     QueueModule,
     ConfigModule,
+    forwardRef(() => SseModule),
   ],
   providers: [SubmissionsService, SubmissionProcessor, JudgeEngineService],
   controllers: [SubmissionsController],
@@ -32,9 +41,8 @@ export class SubmissionsModule implements OnModuleInit {
 
   onModuleInit() {
     // Register the submission processor with the queue
-    this.queueService.registerProcessor(
-      'submissions',
-      (job) => this.submissionProcessor.processSubmission(job),
+    this.queueService.registerProcessor('submissions', (job) =>
+      this.submissionProcessor.processSubmission(job),
     );
   }
 }

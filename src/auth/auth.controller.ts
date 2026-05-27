@@ -22,7 +22,7 @@ export class AuthController {
     const user = await this.userService.create({
       name: registerDto.name,
       passwordHash: hashedPassword,
-      role: Role.USER, 
+      role: Role.USER,
     });
 
     return this.authService.login(user);
@@ -30,12 +30,15 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
-    const user = await this.authService.validateUser(loginDto.name, loginDto.password);
-    
+    const user = await this.authService.validateUser(
+      loginDto.name,
+      loginDto.password,
+    );
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    
+
     return this.authService.login(user);
   }
 }

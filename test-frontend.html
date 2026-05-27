@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Judge SSE Test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin: auto; background: #0f172a; color: #f8fafc; }
+    h1, h2, h3 { color: #38bdf8; }
+    .card { background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    input, button { padding: 10px; margin: 5px 0; border-radius: 4px; border: 1px solid #475569; background: #0f172a; color: white; }
+    button { background: #0284c7; cursor: pointer; border: none; font-weight: bold; }
+    button:hover { background: #0369a1; }
+    pre { background: #000; padding: 15px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; font-size: 13px; }
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+  </style>
+</head>
+<body>
+  <h1>Live Judge SSE Stream Test</h1>
+  
+  <div class="card">
+    <h2>1. Authentication</h2>
+    <input type="text" id="username" placeholder="Username (e.g., testuser)" value="testuser" />
+    <input type="password" id="password" placeholder="Password (min 6 chars)" value="password123" />
+    <button onclick="registerAndLogin()">Register & Login</button>
+    <div id="authStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>2. Seed Database</h2>
+    <p>Creates a Contest, a Problem, and 2 Test Cases (1 visible, 1 hidden).</p>
+    <button onclick="seedDatabase()">Seed Database</button>
+    <div id="seedStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>3. Submit Code & Listen</h2>
+    <p>We'll submit JavaScript code that simply reads input and outputs it, simulating a fast correct answer.</p>
+    <textarea id="code" rows="5" style="width: 100%; background: #0f172a; color: #fff; padding: 10px; border: 1px solid #475569;">
+const fs = require('fs');
+const input = fs.readFileSync('/dev/stdin', 'utf-8').trim();
+console.log(input); // Just echo the input back to match the test case
+    </textarea>
+    <br/>
+    <button onclick="submitCode()">Submit Code</button>
+    
+    <h3>Live Test Results (SSE Stream)</h3>
+    <pre id="resultsLog">Waiting for submission...</pre>
+  </div>
+
+  <script>
+    let jwtToken = '';
+    let problemId = '';
+    let contestId = '';
+    
+    function logResult(msg, type = 'info') {
+      const el = document.getElementById('resultsLog');
+      if (type === 'clear') el.innerHTML = '';
+      else el.innerHTML += `<span class="${type}">${msg}</span>\n`;
+    }
+
+    async function fetchApi(path, method = 'GET', body = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (jwtToken) headers['Authorization'] = `Bearer ${jwtToken}`;
+      
+      const res = await fetch(`http://localhost:3000${path}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : null
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || res.statusText);
+      return data;
+    }
+
+    async function registerAndLogin() {
+      const name = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const statusEl = document.getElementById('authStatus');
+      
+      try {
+        statusEl.innerHTML = "Registering...";
+        await fetchApi('/auth/register', 'POST', { name, password }).catch(() => {}); // Ignore if exists
+        
+        statusEl.innerHTML = "Logging in...";
+        const data = await fetchApi('/auth/login', 'POST', { name, password });
+        jwtToken = data.access_token;
+
+        // Decode JWT to get user ID, then promote to admin for testing
+        const payload = JSON.parse(atob(jwtToken.split('.')[1]));
+        statusEl.innerHTML = "Promoting to admin...";
+        await fetchApi(`/user/${payload.sub}`, 'PATCH', { role: 'admin' });
+
+        // Re-login to get a fresh token with admin role
+        const data2 = await fetchApi('/auth/login', 'POST', { name, password });
+        jwtToken = data2.access_token;
+
+        statusEl.innerHTML = `<span class="success">Logged in as admin! Token stored.</span>`;
+      } catch (err) {
+        statusEl.innerHTML = `<span class="error">Auth Error: ${err.message}</span>`;
+      }
+    }
+
+    async function seedDatabase() {
+      const statusEl = document.getElementById('seedStatus');
+      if (!jwtToken) return statusEl.innerHTML = `<span class="error">Please login first!</span>`;
+      
+      try {
+        statusEl.innerHTML = "Creating contest...";
+        const now = new Date();
+        const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const contest = await fetchApi('/contests', 'POST', {
+          title: "Test Contest " + Date.now(),
+          description: "SSE Test",
+          startTime: now.toISOString(),
+          endTime: tomorrow.toISOString()
+        });
+        contestId = contest.id;
+
+        statusEl.innerHTML = "Creating problem...";
+        const problem = await fetchApi('/problem', 'POST', {
+          title: "Echo Input",
+          description: "Read input and output it",
+          timeLimitMs: 5000,
+          contestId: contestId
+        });
+        problemId = problem.id;
+
+        statusEl.innerHTML = "Creating test cases...";
+        await fetchApi(`/problem/${problemId}/testcases`, 'POST', {
+          input: "Hello World", expectedOutput: "Hello World", isHidden: false, orderIndex: 1
+        });
+        await fetchApi(`/problem/${problemId}/testcases`, 'POST', {
+          input: "Hidden Test", expectedOutput: "Hidden Test", isHidden: true, orderIndex: 2
+        });
+
+        statusEl.innerHTML = `<span class="success">Seed successful! Contest and Problem created.</span>`;
+      } catch (err) {
+        statusEl.innerHTML = `<span class="error">Seed Error: ${err.message}</span>`;
+      }
+    }
+
+    async function submitCode() {
+      if (!jwtToken || !problemId || !contestId) {
+        return logResult("Error: Please complete Auth and Seed steps first.", "error");
+      }
+      
+      const code = document.getElementById('code').value;
+      logResult("", "clear");
+      logResult("Submitting code...");
+
+      try {
+        const submission = await fetchApi('/submissions', 'POST', {
+          code: code,
+          language: "javascript",
+          problemId: problemId,
+          contestId: contestId
+        });
+        
+        logResult(`Submission ID: ${submission.id}`);
+        logResult(`Connecting to SSE Stream...`);
+        listenToSSE(submission.id);
+      } catch (err) {
+        logResult(`Submit Error: ${err.message}`, "error");
+      }
+    }
+
+    async function listenToSSE(submissionId) {
+      try {
+        // We use fetch to read the stream so we can pass the Authorization header!
+        const response = await fetch(`http://localhost:3000/sse/submission/${submissionId}`, {
+          headers: { 'Authorization': `Bearer ${jwtToken}` }
+        });
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            logResult("Stream closed by server.");
+            break;
+          }
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop(); // Keep incomplete chunk in buffer
+
+          for (const chunk of lines) {
+            if (chunk.includes('data:')) {
+              const dataStr = chunk.split('data:')[1].trim();
+              try {
+                const event = JSON.parse(dataStr);
+                handleSseEvent(event);
+              } catch(e) {
+                console.log("Raw SSE non-JSON:", dataStr);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        logResult(`SSE Error: ${err.message}`, "error");
+      }
+    }
+
+    function handleSseEvent(event) {
+      if (event.type === 'test_result') {
+        const icon = event.verdict === 'pass' ? '✅' : '❌';
+        logResult(`${icon} Test Case ${event.testCaseIndex + 1} (${event.isHidden ? 'Hidden' : 'Visible'}) - Verdict: ${event.verdict} in ${event.executionMs}ms`, event.verdict === 'pass' ? 'success' : 'error');
+        if (event.output !== undefined) {
+          logResult(`   Received Output: ${event.output}`);
+        }
+      } 
+      else if (event.type === 'submission.completed') {
+        logResult(`\n🏆 Final Verdict: ${event.finalVerdict} | Score: ${event.score}% | Passed: ${event.passedCount}/${event.totalCount}`);
+      }
+      else if (event.type === 'submission.error') {
+        logResult(`⚠️ Server Error: ${event.message}`, "error");
+      }
+    }
+  </script>
+</body>
+</html>

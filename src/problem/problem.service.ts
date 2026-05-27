@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateProblemDto } from './dto/create-problem.dto';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
 
-
 @Injectable()
 export class ProblemService extends BaseService<Problem> {
   constructor(

@@ -17,7 +17,7 @@ import { UserModule } from '../user/user.module';
       secret: 'SUPER_SECRET_KEY_CHANGE_IN_PRODUCTION',
       signOptions: { expiresIn: '1d' },
     }),
-    UserModule
+    UserModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
