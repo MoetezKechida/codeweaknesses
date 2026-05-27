@@ -57,7 +57,7 @@ export class ContestFinishedListener {
 
     for (const subscription of subscriptions) {
       const delivery = await this.webhooksService.createDelivery(subscription, payload);
-      await this.queueService.enqueueWebhookDelivery(`${delivery.id}:1`, {
+      await this.queueService.enqueueWebhookDelivery(`${delivery.id}_1`, {
         deliveryId: delivery.id,
         attempt: 1,
       });
