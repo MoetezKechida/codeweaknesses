@@ -38,6 +38,13 @@ export class QueueService implements OnModuleInit {
   }
 
   /**
+   * Get the webhook delivery queue instance
+   */
+  getWebhookQueue(): Queue {
+    return this.getOrCreateQueue('webhooks');
+  }
+
+  /**
    * Get Redis connection options
    */
   getRedisConnection(): any {
@@ -81,6 +88,20 @@ export class QueueService implements OnModuleInit {
   async enqueueSubmission(submissionId: string, data: any): Promise<void> {
     await this.getSubmissionQueue().add(submissionId, data, {
       jobId: submissionId,
+    });
+  }
+
+  /**
+   * Enqueue a webhook delivery job, optionally delayed
+   */
+  async enqueueWebhookDelivery(
+    jobId: string,
+    data: any,
+    delayMs = 0,
+  ): Promise<void> {
+    await this.getWebhookQueue().add(jobId, data, {
+      jobId,
+      delay: delayMs,
     });
   }
 

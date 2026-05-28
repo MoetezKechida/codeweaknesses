@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { YogaDriver, YogaDriverConfig } from '@graphql-yoga/nestjs';
 import { join } from 'path';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import { ContestModule } from './contest/contest.module';
 import { ProblemModule } from './problem/problem.module';
@@ -12,8 +13,10 @@ import { AuthModule } from './auth/auth.module';
 import { CommunModule } from './commun/commun.module';
 import { QueueModule } from './queue/queue.module';
 import { SubmissionsModule } from './submissions/submissions.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { SseModule } from './sse/sse.module';
 import { GraphqlStandingsModule } from './graphql/graphql.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 const getDatabaseConfig = () => {
   const dbType = process.env.DB_TYPE || 'postgres';
@@ -54,6 +57,7 @@ const getDatabaseConfig = () => {
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot(getDatabaseConfig()),
     GraphQLModule.forRoot<YogaDriverConfig>({
       driver: YogaDriver,
@@ -67,8 +71,10 @@ const getDatabaseConfig = () => {
     ProblemModule,
     CommunModule,
     SubmissionsModule,
+    WebhooksModule,
     SseModule,
     GraphqlStandingsModule,
+    LeaderboardModule,
   ],
 })
 export class AppModule {}

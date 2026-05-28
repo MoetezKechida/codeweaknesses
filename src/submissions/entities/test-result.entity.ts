@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { TimestampEntity } from 'src/commun/entities/timestamp.entity';
+import { TimestampEntity } from '../../commun/entities/timestamp.entity';
 import { Submission } from './submission.entity';
 
 @Entity('test_results')
@@ -25,10 +25,10 @@ export class TestResult extends TimestampEntity {
   @Column({ type: 'text', nullable: true })
   error!: string | null;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ type: 'integer', nullable: true })
   executionTime!: number | null;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ type: 'integer', nullable: true })
   memoryUsed!: number | null;
 
   @ManyToOne(() => Submission, (submission) => submission.testResults)

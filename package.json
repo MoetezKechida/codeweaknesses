@@ -25,11 +25,15 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/graphql": "^13.4.2",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/mapped-types": "^2.1.1",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-socket.io": "^11.1.24",
     "@nestjs/typeorm": "^11.0.1",
+    "@nestjs/websockets": "^11.1.24",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.77.3",
     "class-transformer": "^0.5.1",
@@ -38,11 +42,13 @@
     "graphql": "^16.14.0",
     "ioredis": "^5.11.0",
     "mysql2": "^3.22.3",
+    "pg": "^8.13.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.21.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.3",
     "typeorm": "^1.0.0"
   },
   "devDependencies": {
@@ -82,6 +88,9 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

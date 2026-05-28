@@ -14,6 +14,7 @@ import { Contest } from 'src/contest/entities/contest.entity';
 import { User } from 'src/user/entities/user.entity';
 import { TestCase } from 'src/problem/entities/test-case.entity';
 import { SseModule } from '../sse/sse.module';
+import { LeaderboardModule } from 'src/leaderboard/leaderboard.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { SseModule } from '../sse/sse.module';
     QueueModule,
     ConfigModule,
     forwardRef(() => SseModule),
+    LeaderboardModule,
   ],
   providers: [SubmissionsService, SubmissionProcessor, JudgeEngineService],
   controllers: [SubmissionsController],

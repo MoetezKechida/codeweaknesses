@@ -1,5 +1,5 @@
 import { Entity, Column } from 'typeorm';
-import { TimestampEntity } from 'src/commun/entities/timestamp.entity';
+import { TimestampEntity } from '../../commun/entities/timestamp.entity';
 
 export enum Role {
   ADMIN = 'admin',
