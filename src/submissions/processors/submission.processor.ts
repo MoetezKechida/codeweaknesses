@@ -8,6 +8,8 @@ import { JudgeEngineService } from '../judge/judge-engine.service';
 import { TestCase } from 'src/problem/entities/test-case.entity';
 import { SubmissionSseService } from '../../sse/submission-sse.service';
 import { SseEventType } from '../../sse/sse-events.types';
+import { LeaderboardGateway } from 'src/leaderboard/leaderboard.gateway';
+
 @Injectable()
 export class SubmissionProcessor {
   constructor(
@@ -19,6 +21,7 @@ export class SubmissionProcessor {
     private testCasesRepository: Repository<TestCase>,
     private judgeEngineService: JudgeEngineService,
     private sseService: SubmissionSseService,
+    private leaderboardGateway: LeaderboardGateway,
   ) {}
 
   async processSubmission(job: Job): Promise<any> {
@@ -195,6 +198,17 @@ export class SubmissionProcessor {
       console.log(
         `Submission ${submissionId} completed: ${passedCount}/${testCases.length} tests passed, score: ${score}`,
       );
+
+      // Broadcast updated leaderboard to all clients watching this contest
+      if (submission.contestId) {
+        // Fire-and-forget — don't let a broadcast failure block the job result
+        this.leaderboardGateway
+          .broadcastLeaderboard(submission.contestId)
+          .catch((err) =>
+            console.error(`Leaderboard broadcast failed for contest ${submission.contestId}:`, err),
+          );
+      }
+
       return { success: true, submissionId, score, passedCount };
     } catch (error: any) {
       console.error(`Error processing submission ${submissionId}:`, error);
