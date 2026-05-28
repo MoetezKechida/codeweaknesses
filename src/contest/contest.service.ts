@@ -28,10 +28,12 @@ export class ContestService extends BaseService<Contest> implements OnModuleInit
       return null;
     }
 
-    if (!contest.finishedAt) {
-      contest.finishedAt = new Date();
-      await this.contestRepository.save(contest);
+    if (contest.finishedAt) {
+      return contest;
     }
+
+    contest.finishedAt = new Date();
+    await this.contestRepository.save(contest);
 
     this.eventEmitter.emit('contest.finished', { contestId: contest.id });
     return contest;
