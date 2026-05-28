@@ -104,7 +104,7 @@ export class WebhooksService {
     if (delivery) {
       await this.deliveryRepo.update(delivery.id, {
         status,
-        attempts: delivery.attempts + 1,
+        attempts: Math.max(delivery.attempts, 1),
         lastAttemptAt: new Date(),
         responseCode,
       });
