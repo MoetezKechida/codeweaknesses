@@ -15,19 +15,15 @@ interface ExecutionResult {
 
 @Injectable()
 export class JudgeEngineService {
-  private readonly logger = new Logger(JudgeEngineService.name);
   private docker: Docker;
   private readonly submissionTimeout: number;
   private readonly memoryLimit: number;
+  private readonly logger = new Logger(JudgeEngineService.name);
 
   constructor(private configService: ConfigService) {
-    // Initialize Docker client
-    // On Windows, Docker Desktop uses named pipes or TCP
-    // On Linux, use socket
     const isWindows = process.platform === 'win32';
 
     if (isWindows) {
-      // Windows: Try named pipe first, then TCP
       try {
         this.docker = new Docker({
           socketPath: '//./pipe/docker_engine',
@@ -70,7 +66,6 @@ export class JudgeEngineService {
       // Get the appropriate image for the language
       const image = this.getImageForLanguage(language);
 
-      let container: Docker.Container;
       const createOptions = {
         Image: image,
         Env: [
