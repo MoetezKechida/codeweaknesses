@@ -39,11 +39,7 @@ describe('WebhooksService retry helpers', () => {
     expect(service.getRetryDelayMs(3)).toBe(4000);
     expect(service.getRetryDelayMs(10)).toBe(15000);
   });
-});import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { WebhooksService } from './webhooks.service';
-import { WebhookSubscription } from './entities/webhook-subscription.entity';
-import { WebhookDelivery } from './entities/webhook-delivery.entity';
+});
 
 describe('WebhooksService', () => {
   let service: WebhooksService;
