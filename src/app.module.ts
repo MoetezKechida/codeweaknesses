@@ -2,6 +2,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import { ContestModule } from './contest/contest.module';
 import { ProblemModule } from './problem/problem.module';
@@ -9,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { CommunModule } from './commun/commun.module';
 import { QueueModule } from './queue/queue.module';
 import { SubmissionsModule } from './submissions/submissions.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { SseModule } from './sse/sse.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
@@ -51,6 +53,7 @@ const getDatabaseConfig = () => {
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot(getDatabaseConfig()),
     QueueModule,
     AuthModule,
@@ -58,6 +61,7 @@ const getDatabaseConfig = () => {
     ProblemModule,
     CommunModule,
     SubmissionsModule,
+    WebhooksModule,
     SseModule,
     LeaderboardModule,
   ],

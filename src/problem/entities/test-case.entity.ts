@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { TimestampEntity } from 'src/commun/entities/timestamp.entity';
-import { Problem } from 'src/problem/entities/problem.entity';
+import { TimestampEntity } from '../../commun/entities/timestamp.entity';
+import { Problem } from './problem.entity';
 
 @Entity('test_cases')
 export class TestCase extends TimestampEntity {
