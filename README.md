@@ -1,7 +1,7 @@
 # CodeWeaknesses — Competitive Programming Judge Platform
 
 <p align="center">
-  <img src="https://nestjs.com/img/logo-small.svg" width="80" alt="NestJS Logo" />
+  <img src="logo.png" width="80" alt="Logo" />
 </p>
 
 <p align="center">
