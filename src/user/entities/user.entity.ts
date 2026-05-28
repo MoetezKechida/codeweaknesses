@@ -2,17 +2,15 @@ import { Entity, Column } from 'typeorm';
 import { TimestampEntity } from '../../commun/entities/timestamp.entity';
 
 export enum Role {
-  ADMIN = 'admin', 
+  ADMIN = 'admin',
   EDITOR = 'editor',
-  USER = 'user', 
-  
+  USER = 'user',
 }
 
-@Entity('users') 
+@Entity('users')
 export class User extends TimestampEntity {
-
   @Column({ unique: true })
-  name!: string; 
+  name!: string;
 
   @Column()
   passwordHash!: string;
@@ -20,7 +18,7 @@ export class User extends TimestampEntity {
   @Column({
     type: 'enum',
     enum: Role,
-    default: Role.USER, 
+    default: Role.USER,
   })
   role!: Role;
 }

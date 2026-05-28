@@ -4,7 +4,6 @@ import { TimestampEntity } from '../../commun/entities/timestamp.entity';
 
 @Entity('problems')
 export class Problem extends TimestampEntity {
-
   @Column()
   title!: string;
 

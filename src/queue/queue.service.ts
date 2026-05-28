@@ -143,12 +143,21 @@ export class QueueService implements OnModuleInit {
 
   private getWorkerConcurrency(queueName: string): number {
     const queueEnvKeys = this.getQueueConcurrencyEnvKeys(queueName);
-    const globalFallback = this.getPositiveIntegerConfig('WORKER_CONCURRENCY', 1);
+    const globalFallback = this.getPositiveIntegerConfig(
+      'WORKER_CONCURRENCY',
+      1,
+    );
     const queueDefault = queueName === 'submissions' ? 2 : globalFallback;
 
     for (const envKey of queueEnvKeys) {
-      const configuredValue = this.configService.get<string | number | undefined>(envKey);
-      if (configuredValue === undefined || configuredValue === null || configuredValue === '') {
+      const configuredValue = this.configService.get<
+        string | number | undefined
+      >(envKey);
+      if (
+        configuredValue === undefined ||
+        configuredValue === null ||
+        configuredValue === ''
+      ) {
         continue;
       }
 
@@ -159,22 +168,19 @@ export class QueueService implements OnModuleInit {
   }
 
   private getQueueConcurrencyEnvKeys(queueName: string): string[] {
-    const normalizedQueueName = queueName.replace(/[^a-zA-Z0-9]+/g, '_').toUpperCase();
+    const normalizedQueueName = queueName
+      .replace(/[^a-zA-Z0-9]+/g, '_')
+      .toUpperCase();
     const envKeys = [`${normalizedQueueName}_WORKER_CONCURRENCY`];
 
     if (normalizedQueueName.endsWith('S')) {
-      envKeys.unshift(
-        `${normalizedQueueName.slice(0, -1)}_WORKER_CONCURRENCY`,
-      );
+      envKeys.unshift(`${normalizedQueueName.slice(0, -1)}_WORKER_CONCURRENCY`);
     }
 
     return envKeys;
   }
 
-  private getPositiveIntegerConfig(
-    key: string,
-    fallback: number,
-  ): number {
+  private getPositiveIntegerConfig(key: string, fallback: number): number {
     const value = this.configService.get<string | number | undefined>(key);
     if (value === undefined || value === null || value === '') {
       return fallback;

@@ -6,6 +6,9 @@ import { Submission, SubmissionStatus } from '../entities/submission.entity';
 import { TestResult } from '../entities/test-result.entity';
 import { JudgeEngineService } from '../judge/judge-engine.service';
 import { TestCase } from 'src/problem/entities/test-case.entity';
+import { SubmissionSseService } from '../../sse/submission-sse.service';
+import { SseEventType } from '../../sse/sse-events.types';
+import { LeaderboardGateway } from 'src/leaderboard/leaderboard.gateway';
 
 @Injectable()
 export class SubmissionProcessor {
@@ -17,6 +20,8 @@ export class SubmissionProcessor {
     @InjectRepository(TestCase)
     private testCasesRepository: Repository<TestCase>,
     private judgeEngineService: JudgeEngineService,
+    private sseService: SubmissionSseService,
+    private leaderboardGateway: LeaderboardGateway,
   ) {}
 
   async processSubmission(job: Job): Promise<any> {
@@ -48,7 +53,9 @@ export class SubmissionProcessor {
         order: { orderIndex: 'ASC' },
       });
 
-      const visibleTestCases = testCases.filter((testCase) => !testCase.isHidden);
+      const visibleTestCases = testCases.filter(
+        (testCase) => !testCase.isHidden,
+      );
       const hiddenTestCases = testCases.filter((testCase) => testCase.isHidden);
 
       // Execute code against each test case
@@ -57,7 +64,14 @@ export class SubmissionProcessor {
       let maxMemoryUsed = 0;
       let visibleCasesPassed = true;
 
-      const runTestCase = async (testCase: TestCase): Promise<boolean> => {
+      if (testCases.length === 0) {
+        throw new Error('No test cases found for this problem');
+      }
+
+      const runTestCase = async (
+        testCase: TestCase,
+        index: number,
+      ): Promise<boolean> => {
         const result = await this.judgeEngineService.executeCode(
           language,
           code,
@@ -76,7 +90,9 @@ export class SubmissionProcessor {
           );
 
         if (testCase.isHidden) {
-          console.log(`Hidden test case ${testCase.id}: ${passed ? 'passed' : 'failed'}`);
+          console.log(
+            `Hidden test case ${testCase.id}: ${passed ? 'passed' : 'failed'}`,
+          );
         } else {
           console.log(`Test case ${testCase.id}:`);
           console.log(`  Output: [${result.output}]`);
@@ -101,11 +117,28 @@ export class SubmissionProcessor {
           memoryUsed: result.memoryUsed,
         } as any);
 
+        this.sseService.push(submissionId, {
+          type: SseEventType.TEST_RESULT,
+          submissionId,
+          testCaseIndex: index,
+          testCaseId: testCase.id,
+          verdict: passed
+            ? 'pass'
+            : result.error && result.error.toLowerCase().includes('time')
+              ? 'tle'
+              : 'fail',
+          executionMs: result.executionTime,
+          isHidden: testCase.isHidden,
+          output: result.error ? (result.output ? result.output + '\n[STDERR]:\n' + result.error : result.error) : result.output,
+          expectedOutput: testCase.expectedOutput,
+        });
+
         return passed;
       };
 
+      let currentIndex = 0;
       for (const testCase of visibleTestCases) {
-        const passed = await runTestCase(testCase);
+        const passed = await runTestCase(testCase, currentIndex++);
         if (!passed) {
           visibleCasesPassed = false;
         }
@@ -119,9 +152,11 @@ export class SubmissionProcessor {
 
       if (visibleCasesPassed) {
         for (const testCase of hiddenTestCases) {
-          const passed = await runTestCase(testCase);
+          const passed = await runTestCase(testCase, currentIndex++);
           if (!passed) {
-            console.log(`Stopping after first hidden test failure for submission ${submissionId}.`);
+            console.log(
+              `Stopping after first hidden test failure for submission ${submissionId}.`,
+            );
             break;
           }
         }
@@ -129,7 +164,9 @@ export class SubmissionProcessor {
 
       // Calculate score and determine final status
       const score =
-        testCases.length > 0 ? Math.round((passedCount / testCases.length) * 100) : 100;
+        testCases.length > 0
+          ? Math.round((passedCount / testCases.length) * 100)
+          : 100;
       let finalStatus = SubmissionStatus.ACCEPTED;
 
       if (passedCount === 0 && testCases.length > 0) {
@@ -147,12 +184,36 @@ export class SubmissionProcessor {
 
       await this.submissionsRepository.save(submission);
 
+      this.sseService.push(submissionId, {
+        type: SseEventType.SUBMISSION_COMPLETED,
+        submissionId,
+        finalVerdict: finalStatus,
+        score,
+        totalExecutionMs: totalExecutionTime,
+        passedCount,
+        totalCount: testCases.length,
+      });
+      this.sseService.complete(submissionId);
+
       console.log(
         `Submission ${submissionId} completed: ${passedCount}/${testCases.length} tests passed, score: ${score}`,
       );
+
+      // Broadcast updated leaderboard to all clients watching this contest
+      if (submission.contestId) {
+        // Fire-and-forget — don't let a broadcast failure block the job result
+        this.leaderboardGateway
+          .broadcastLeaderboard(submission.contestId)
+          .catch((err) =>
+            console.error(`Leaderboard broadcast failed for contest ${submission.contestId}:`, err),
+          );
+      }
+
       return { success: true, submissionId, score, passedCount };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error processing submission ${submissionId}:`, error);
+
+      this.sseService.error(submissionId, error.message || 'Internal error');
 
       // Update submission status to ERROR
       const submission = await this.submissionsRepository.findOne({
