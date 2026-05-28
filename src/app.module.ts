@@ -2,6 +2,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { GraphQLModule } from '@nestjs/graphql';
+import { YogaDriver, YogaDriverConfig } from '@graphql-yoga/nestjs';
+import { join } from 'path';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import { ContestModule } from './contest/contest.module';
@@ -12,6 +15,7 @@ import { QueueModule } from './queue/queue.module';
 import { SubmissionsModule } from './submissions/submissions.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { SseModule } from './sse/sse.module';
+import { GraphqlStandingsModule } from './graphql/graphql.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 const getDatabaseConfig = () => {
@@ -55,6 +59,12 @@ const getDatabaseConfig = () => {
     ConfigModule.forRoot(),
     EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot(getDatabaseConfig()),
+    GraphQLModule.forRoot<YogaDriverConfig>({
+      driver: YogaDriver,
+      autoSchemaFile: join(process.cwd(), 'schema.gql'),
+      sortSchema: true,
+      context: ({ req }) => ({ req }),
+    }),
     QueueModule,
     AuthModule,
     ContestModule,
@@ -63,6 +73,7 @@ const getDatabaseConfig = () => {
     SubmissionsModule,
     WebhooksModule,
     SseModule,
+    GraphqlStandingsModule,
     LeaderboardModule,
   ],
 })
